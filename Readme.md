@@ -2,7 +2,8 @@ Minimum supported OS
 =====
 
 This version of ShockEmu has been tested on:
-* MacOS Mojave (10.14)
+* macOS 10.13: High Sierra
+* macOS 10.14: Mojave
 
 Setup
 =====
