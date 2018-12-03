@@ -1,9 +1,17 @@
+Minimum supported OS
+=====
+
+This version of ShockEmu has been tested on:
+* MacOS Mojave (10.14)
+
 Setup
 =====
 
-ShockEmu requires the OS X command line development tools to be installed.  Installation steps:
+ShockEmu requires the OS X Command Line Tools to be installed.  
 
-	git clone https://github.com/daeken/ShockEmu.git
+Installation steps:
+
+	git clone https://github.com/maephisto666/ShockEmu.git
 	./build.sh <filename>.se
 	./run.sh
 
@@ -12,7 +20,7 @@ It depends on your system having PS4 Remote Play installed at `/Applications/Rem
 SE file format
 ==============
 
-SE files are, generally speaking, a mapping between an input key, mouse button, or mouse movement to a DualShock 4 input.  See the example file (`nomanssky.se`) for a breakdown of the format.
+SE files are, generally speaking, a mapping between an input key, mouse button, or mouse movement to a DualShock 4 input.  See the example file (`example.se`) for a breakdown of the format.
 
 How it works
 ============
