@@ -14,7 +14,7 @@ cd ShockEmu
 ./run.sh
 ```
 
-It depends on your system having PS4 Remote Play installed at `/Applications/RemotePlay.app`. If this is not the case, you'll need to modify `run.sh` accordingly.
+It depends on your system having [PS4 Remote Play](https://remoteplay.dl.playstation.net/remoteplay/lang/en/index.html) installed at `/Applications/RemotePlay.app`. If this is not the case, you'll need to modify `run.sh` accordingly.
 
 The `OS X Command Line Tools` needs [to be installed](https://stackoverflow.com/a/53078282/584548).
 
