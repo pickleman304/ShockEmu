@@ -29,3 +29,5 @@ The `alias` below allows for typing `play` / `enter` anywhere in `Terminal` and 
 ```
 $ cat ~/.zshrc | grep play
 alias play="pushd /Users/backslash-f/Downloads/source/backslash-f/ShockEmu; ./run.sh &; popd"
+```
+👆🏻`ShockEmu` repo location must be updated according to your machine.
