@@ -13,7 +13,7 @@ left = dpadLeft
 right = dpadRight
 down = dpadDown
 
-y = PS
+t = PS # Not working, need to use the PS "native" button (appears when mousing over the window)
 space = touchpad
 1 = share
 0 = options
