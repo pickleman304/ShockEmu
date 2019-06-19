@@ -25,7 +25,7 @@ SE files are, generally speaking, a mapping between an input key, mouse button, 
 ShockEmu works by intercepting the IOHID calls of PS4 Remote Play application and presents an emulated DualShock controller. It also hooks into the input routines of the application, to catch keyboard and mouse inputs, which then get mapped according to your SE file.
 
 # Pro Tip
-The `alias` below allows for typing `play` / `Enter` anywhere in `Terminal` and have `RemotePlay.app` launched with the above keys mapped:
+The `alias` below allows for typing `play` / `enter` anywhere in `Terminal` and have `RemotePlay.app` launched with the above keys mapped:
 ```
 $ cat ~/.zshrc | grep play
 alias play="pushd /Users/backslash-f/Downloads/source/backslash-f/ShockEmu; ./run.sh &; popd"
