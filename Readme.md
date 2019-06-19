@@ -2,8 +2,7 @@ Minimum supported OS
 =====
 
 This version of ShockEmu has been tested on:
-* macOS 10.13: High Sierra
-* macOS 10.14: Mojave
+* macOS 10.15: Catalina (Beta)
 
 Setup
 =====
@@ -12,8 +11,8 @@ ShockEmu requires the OS X Command Line Tools to be installed.
 
 Installation steps:
 
-	git clone https://github.com/maephisto666/ShockEmu.git
-	./build.sh <filename>.se
+	git clone git@github.com:backslash-f/ShockEmu.git
+	./build.sh only_keyboard.se
 	./run.sh
 
 It depends on your system having PS4 Remote Play installed at `/Applications/RemotePlay.app`.  If this is not the case, you'll need to modify `run.sh` accordingly.
