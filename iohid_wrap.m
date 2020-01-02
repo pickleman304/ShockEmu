@@ -61,14 +61,6 @@ void IOHIDManagerSetDeviceMatchingMultiple( IOHIDManagerRef manager, CFArrayRef 
 	printf("IOHIDManagerSetDeviceMatchingMultiple\n");
 }
 
-void IOHIDManagerRegisterInputValueCallback( 
-                                IOHIDManagerRef                 manager,
-                                IOHIDValueCallback _Nullable    callback,
-                                void * _Nullable                context) {
-printf("IOHIDManagerRegisterInputValueCallback**********\n");
-				
-								}
-
 
 void IOHIDManagerUnscheduleFromRunLoop( IOHIDManagerRef manager, CFRunLoopRef runLoop, CFStringRef runLoopMode) {
 	printf("IOHIDManagerUnscheduleFromRunLoop\n");
@@ -120,8 +112,20 @@ IOReturn IOHIDDeviceSetReport( IOHIDDeviceRef device, IOHIDReportType reportType
 	return kIOReturnSuccess;
 }
 
+////
+////
+////
+////
+////
 // 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
 
+void IOHIDDeviceRegisterInputValueCallback(
+                                IOHIDDeviceRef                  device,
+                                IOHIDValueCallback _Nullable    callback,
+                                void * _Nullable                context){
+printf("IOHIDManagerRegisterInputValueCallback**********\n");
+				
+								}
 
 
 static NSMutableDictionary* create_criterion( UInt32 inUsagePage, UInt32 inUsage )
@@ -134,7 +138,7 @@ static NSMutableDictionary* create_criterion( UInt32 inUsagePage, UInt32 inUsage
 
 
 void input_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDValueRef value) {
-	printf("\n");
+	printf("input_callback*********\n");
 }
 
 void add_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDDeviceRef device) {
@@ -144,7 +148,7 @@ void add_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDDevic
 	
 	IOHIDDeviceOpen(device, kIOHIDOptionsTypeNone);
 	IOHIDDeviceRegisterInputValueCallback(device, input_callback, (void*) inSender);
-	
+	printf("add_callback*********\n");
 	// Joystick *js = [[Joystick alloc] initWithDevice: device];
 	// [js setIndex: findAvailableIndex([self joysticks], js)];
 	
@@ -162,6 +166,13 @@ void timer_callback(CFRunLoopTimerRef timer, void *ctx) {
     // }
 }
 
+////
+////
+////
+////
+////
+////
+////
 ////
 
 #define MOUSESTEPS 10
@@ -220,6 +231,9 @@ static IOHIDManagerRef hidManager;
 }
 
 -(void) setupPad {
+
+	printf("setupPad*********\n");
+
     hidManager = IOHIDManagerCreate( kCFAllocatorDefault, kIOHIDOptionsTypeNone);
 	NSArray *criteria = [NSArray arrayWithObjects: 
 		 create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick),
@@ -236,7 +250,6 @@ static IOHIDManagerRef hidManager;
 	
 	IOHIDManagerRegisterDeviceMatchingCallback( hidManager, add_callback, (void*)self );
 // 	IOHIDManagerRegisterDeviceRemovalCallback(hidManager, remove_callback, (void*) self);
-	IOHIDManagerRegisterInputValueCallback(hidManager, input_callback, (void*)self);
 // // register individually so we can find the device more easily
     
     
