@@ -6,7 +6,7 @@ All credits should go to https://github.com/daeken
 
 # Setup
 ```zsh
-git clone git@github.com:MiCkSoftware/ShockEmu.git
+git clone https://github.com/MiCkSoftware/ShockEmu.git
 cd ShockEmu
 ./build.sh only_keyboard.se
 ./run.sh
@@ -19,7 +19,7 @@ The `OS X Command Line Tools` needs [to be installed](https://stackoverflow.com/
 # Key Mapping
 `only_keyboard.se` goes like this:
 
-![Key Mapping](https://github.com/backslash-f/ShockEmu/blob/master/KeyMapping.png)
+![Key Mapping](https://github.com/MiCkSoftware/ShockEmu/blob/master/KeyMapping.png)
 
 # SE File Format
 SE files are, generally speaking, a mapping between an input key, mouse button, or mouse movement to a DualShock 4 input. See the example file (`example.se`) for a breakdown of the format.
