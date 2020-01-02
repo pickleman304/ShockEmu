@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
+// 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
+
 typedef struct {
 	uint8_t id, 
 	left_x, left_y, 
