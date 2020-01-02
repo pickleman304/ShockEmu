@@ -6,7 +6,7 @@ All credits should go to https://github.com/daeken
 
 # Setup
 ```zsh
-git clone git@github.com:backslash-f/ShockEmu.git
+git clone git@github.com:MiCkSoftware/ShockEmu.git
 cd ShockEmu
 ./build.sh only_keyboard.se
 ./run.sh
