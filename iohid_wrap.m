@@ -4,13 +4,14 @@
 #include <IOKit/IOTypes.h>
 #include <IOKit/IOReturn.h>
 #include <IOKit/hid/IOHIDLib.h>
+//#include <IOKit/hid/IOHIDManager.h>
 #import <objc/runtime.h>
 
 #include <stdio.h>
 #include <unistd.h>
 #include <dlfcn.h>
 
-// 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
+
 
 typedef struct {
 	uint8_t id, 
@@ -54,9 +55,20 @@ void IOHIDManagerRegisterDeviceRemovalCallback( IOHIDManagerRef manager, IOHIDDe
 	printf("IOHIDManagerRegisterDeviceMatchingCallback\n");
 }
 
+
+
 void IOHIDManagerSetDeviceMatchingMultiple( IOHIDManagerRef manager, CFArrayRef multiple) {
 	printf("IOHIDManagerSetDeviceMatchingMultiple\n");
 }
+
+void IOHIDManagerRegisterInputValueCallback( 
+                                IOHIDManagerRef                 manager,
+                                IOHIDValueCallback _Nullable    callback,
+                                void * _Nullable                context) {
+printf("IOHIDManagerRegisterInputValueCallback**********\n");
+				
+								}
+
 
 void IOHIDManagerUnscheduleFromRunLoop( IOHIDManagerRef manager, CFRunLoopRef runLoop, CFStringRef runLoopMode) {
 	printf("IOHIDManagerUnscheduleFromRunLoop\n");
@@ -108,6 +120,50 @@ IOReturn IOHIDDeviceSetReport( IOHIDDeviceRef device, IOHIDReportType reportType
 	return kIOReturnSuccess;
 }
 
+// 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
+
+
+
+static NSMutableDictionary* create_criterion( UInt32 inUsagePage, UInt32 inUsage )
+{
+	NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+	[dict setObject: [NSNumber numberWithInt: inUsagePage] forKey: (NSString*)CFSTR(kIOHIDDeviceUsagePageKey)];
+	[dict setObject: [NSNumber numberWithInt: inUsage] forKey: (NSString*)CFSTR(kIOHIDDeviceUsageKey)];
+	return dict;
+} 
+
+
+void input_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDValueRef value) {
+	printf("\n");
+}
+
+void add_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDDeviceRef device) {
+
+	printf("add_callback*********\n");
+	// JoystickController* self = (JoystickController*)inContext;
+	
+	IOHIDDeviceOpen(device, kIOHIDOptionsTypeNone);
+	IOHIDDeviceRegisterInputValueCallback(device, input_callback, (void*) inSender);
+	
+	// Joystick *js = [[Joystick alloc] initWithDevice: device];
+	// [js setIndex: findAvailableIndex([self joysticks], js)];
+	
+	// [js populateActions];
+
+	// [[self joysticks] addObject: js];
+	// [self->outlineView reloadData];
+}
+
+void timer_callback(CFRunLoopTimerRef timer, void *ctx) {
+    // JoystickController *jc = (JoystickController *)ctx;
+    // jc->mouseLoc = [NSEvent mouseLocation];
+    // for (Target *target in [jc runningTargets]) {
+    //     [target update: jc];
+    // }
+}
+
+////
+
 #define MOUSESTEPS 10
 
 @interface HIDRunner:NSObject
@@ -138,6 +194,7 @@ IOReturn IOHIDDeviceSetReport( IOHIDDeviceRef device, IOHIDReportType reportType
 @end
 
 static HIDRunner *hid;
+static IOHIDManagerRef hidManager;
 
 #define SWAP(ocls, sel) do { \
 	id rcls = NSClassFromString(@"_TtC10RemotePlay17RPWindowStreaming"); \
@@ -161,6 +218,39 @@ static HIDRunner *hid;
 		SWAP(@"_TtC10RemotePlay17RPWindowStreaming", (rightMouseUp:));
 	});
 }
+
+-(void) setupPad {
+    hidManager = IOHIDManagerCreate( kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+	NSArray *criteria = [NSArray arrayWithObjects: 
+		 create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick),
+		 create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad),
+         create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_MultiAxisController),
+         //create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_Keyboard),
+	nil];
+	
+	IOHIDManagerSetDeviceMatchingMultiple(hidManager, (CFArrayRef)criteria);
+    
+	// IOHIDManagerScheduleWithRunLoop( hidManager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode );
+	IOReturn tIOReturn = IOHIDManagerOpen( hidManager, kIOHIDOptionsTypeNone );
+	(void)tIOReturn;
+	
+	IOHIDManagerRegisterDeviceMatchingCallback( hidManager, add_callback, (void*)self );
+// 	IOHIDManagerRegisterDeviceRemovalCallback(hidManager, remove_callback, (void*) self);
+	IOHIDManagerRegisterInputValueCallback(hidManager, input_callback, (void*)self);
+// // register individually so we can find the device more easily
+    
+    
+	
+    // Setup timer for continuous targets
+    // CFRunLoopTimerContext ctx = {
+    //     0, (void*)self, NULL, NULL, NULL
+    // };
+    // CFRunLoopTimerRef timer = CFRunLoopTimerCreate(kCFAllocatorDefault,
+    //                                                CFAbsoluteTimeGetCurrent(), 1.0/80.0,
+    //                                                0, 0, timer_callback, &ctx);
+    // CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
+}
+
 - (id)initWithRunLoop:(CFRunLoopRef)_runLoop andMode:(CFStringRef)_mode {
 	hid = self = [super init];
 	runLoop = _runLoop;
@@ -169,6 +259,11 @@ static HIDRunner *hid;
 
 	for(int i = 0; i < 256; ++i)
 		keys[i] = false;
+
+////
+	
+	[self setupPad];
+////
 
 	return self;
 }
@@ -249,7 +344,7 @@ static HIDRunner *hid;
 }
 
 - (void)keyDown:(NSEvent *)event {
-	//NSLog(@"down %i", [event keyCode]);
+	NSLog(@"down %i", [event keyCode]);
 	hid->keys[[event keyCode]] = true;
 	[hid kick];
 }
@@ -260,7 +355,7 @@ static HIDRunner *hid;
 }
 
 - (void)mouseMoved:(NSEvent *)event {
-	NSLog(@"mouseMoved");
+	//NSLog(@"mouseMoved");
 
 	NSPoint mouse = [event locationInWindow];
 	CFAbsoluteTime curtime = CFAbsoluteTimeGetCurrent();
@@ -268,8 +363,8 @@ static HIDRunner *hid;
 	float velY = (mouse.y - hid->lastMouse.y) / (curtime - hid->lastMouseTime);
 	hid->mouseAccelX = (velX - hid->mouseVelX) / (curtime - hid->lastMouseTime);
 	hid->mouseAccelY = (velY - hid->mouseVelY) / (curtime - hid->lastMouseTime);
-	NSLog(@"vel %f %f", velX, velY);
-	NSLog(@"accel %f %f", hid->mouseAccelX, hid->mouseAccelY);
+	//NSLog(@"vel %f %f", velX, velY);
+	//NSLog(@"accel %f %f", hid->mouseAccelX, hid->mouseAccelY);
 	hid->mouseVelX = velX;
 	hid->mouseVelY = velY;
 	hid->lastMouseTime = curtime;
