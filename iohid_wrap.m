@@ -11,6 +11,10 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
+#include <string.h> 
+#include <fcntl.h> 
+#include <sys/stat.h> 
+#include <sys/types.h> 
 
 
 typedef struct {
@@ -112,70 +116,7 @@ IOReturn IOHIDDeviceSetReport( IOHIDDeviceRef device, IOHIDReportType reportType
 	return kIOReturnSuccess;
 }
 
-////
-////
-////
-////
-////
-// 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
 
-void IOHIDDeviceRegisterInputValueCallback(
-                                IOHIDDeviceRef                  device,
-                                IOHIDValueCallback _Nullable    callback,
-                                void * _Nullable                context){
-printf("IOHIDManagerRegisterInputValueCallback**********\n");
-				
-								}
-
-
-static NSMutableDictionary* create_criterion( UInt32 inUsagePage, UInt32 inUsage )
-{
-	NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
-	[dict setObject: [NSNumber numberWithInt: inUsagePage] forKey: (NSString*)CFSTR(kIOHIDDeviceUsagePageKey)];
-	[dict setObject: [NSNumber numberWithInt: inUsage] forKey: (NSString*)CFSTR(kIOHIDDeviceUsageKey)];
-	return dict;
-} 
-
-
-void input_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDValueRef value) {
-	printf("input_callback*********\n");
-}
-
-void add_callback(void* inContext, IOReturn inResult, void* inSender, IOHIDDeviceRef device) {
-
-	printf("add_callback*********\n");
-	// JoystickController* self = (JoystickController*)inContext;
-	
-	IOHIDDeviceOpen(device, kIOHIDOptionsTypeNone);
-	IOHIDDeviceRegisterInputValueCallback(device, input_callback, (void*) inSender);
-	printf("add_callback*********\n");
-	// Joystick *js = [[Joystick alloc] initWithDevice: device];
-	// [js setIndex: findAvailableIndex([self joysticks], js)];
-	
-	// [js populateActions];
-
-	// [[self joysticks] addObject: js];
-	// [self->outlineView reloadData];
-}
-
-void timer_callback(CFRunLoopTimerRef timer, void *ctx) {
-    // JoystickController *jc = (JoystickController *)ctx;
-    // jc->mouseLoc = [NSEvent mouseLocation];
-    // for (Target *target in [jc runningTargets]) {
-    //     [target update: jc];
-    // }
-}
-
-////
-////
-////
-////
-////
-////
-////
-////
-
-#define MOUSESTEPS 10
 
 @interface HIDRunner:NSObject
 {
@@ -202,10 +143,98 @@ void timer_callback(CFRunLoopTimerRef timer, void *ctx) {
 	CFAbsoluteTime lastMouseTime;
 	float mouseAccelX, mouseAccelY, mouseVelX, mouseVelY;
 }
+
+-(void)fakeDown:(int)code;
+-(void)fakeUp:(int)code;
 @end
 
+
+
 static HIDRunner *hid;
-static IOHIDManagerRef hidManager;
+
+////
+////
+////
+////
+////
+// 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
+
+
+
+@interface GPadManager : NSObject 
++(void)gpadloop:(id)param;
+-(void)start;
+-(void)close;
+@end
+
+@implementation GPadManager
+
+static int fd;
+
+- (void) close {
+	close(fd);
+}
+
+- (void) start {
+		char buf[10];
+		printf("GPAD Server: task launch\n");
+		
+		sprintf(buf,"%d",getpid());
+		// sprintf(buf,"%d",getpid());
+		if(mkfifo("/tmp/gpad-daemon-data",0660) == -1)
+				perror("mkfifo");
+		else 
+			printf("GPAD Server: pipe created : %s\n", buf);
+
+		[NSThread detachNewThreadSelector:@selector(gpadloop:) toTarget:[GPadManager class] withObject:self];
+}
+
+
++(void)gpadloop:(id)param{
+
+	char rdbuf[50];
+	int code,val;
+	fd = open("/tmp/gpad-daemon-data",O_RDONLY);
+	
+	while (true) {
+
+		
+		read(fd, rdbuf, 50);
+		if (strlen(rdbuf) > 0) {
+			printf("GPAD Server: has been entered : [%s] \n",rdbuf);
+			if (sscanf(rdbuf, "%4d%4d", &code, &val) == 1) {
+				printf("\t\t[%d][%d] \n",code, val);
+			}
+			sprintf(rdbuf, "%s", "\0");
+			fflush(stdout);
+			// [hid fakeDown:124]
+		}
+		
+		usleep(10000);
+		// [hid fakeUp:124];
+	} 
+
+	printf("GPAD Server: task loop KILLED!\n");
+}
+@end
+
+
+
+
+
+static GPadManager *gpadmanager;
+////
+////
+////
+////
+////
+////
+////
+////
+
+#define MOUSESTEPS 10
+
+
 
 #define SWAP(ocls, sel) do { \
 	id rcls = NSClassFromString(@"_TtC10RemotePlay17RPWindowStreaming"); \
@@ -228,41 +257,11 @@ static IOHIDManagerRef hidManager;
 		SWAP(@"_TtC10RemotePlay17RPWindowStreaming", (rightMouseDown:));
 		SWAP(@"_TtC10RemotePlay17RPWindowStreaming", (rightMouseUp:));
 	});
+	////
+
 }
 
--(void) setupPad {
 
-	printf("setupPad*********\n");
-
-    hidManager = IOHIDManagerCreate( kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-	NSArray *criteria = [NSArray arrayWithObjects: 
-		 create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick),
-		 create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad),
-         create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_MultiAxisController),
-         //create_criterion(kHIDPage_GenericDesktop, kHIDUsage_GD_Keyboard),
-	nil];
-	
-	IOHIDManagerSetDeviceMatchingMultiple(hidManager, (CFArrayRef)criteria);
-    
-	// IOHIDManagerScheduleWithRunLoop( hidManager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode );
-	IOReturn tIOReturn = IOHIDManagerOpen( hidManager, kIOHIDOptionsTypeNone );
-	(void)tIOReturn;
-	
-	IOHIDManagerRegisterDeviceMatchingCallback( hidManager, add_callback, (void*)self );
-// 	IOHIDManagerRegisterDeviceRemovalCallback(hidManager, remove_callback, (void*) self);
-// // register individually so we can find the device more easily
-    
-    
-	
-    // Setup timer for continuous targets
-    // CFRunLoopTimerContext ctx = {
-    //     0, (void*)self, NULL, NULL, NULL
-    // };
-    // CFRunLoopTimerRef timer = CFRunLoopTimerCreate(kCFAllocatorDefault,
-    //                                                CFAbsoluteTimeGetCurrent(), 1.0/80.0,
-    //                                                0, 0, timer_callback, &ctx);
-    // CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
-}
 
 - (id)initWithRunLoop:(CFRunLoopRef)_runLoop andMode:(CFStringRef)_mode {
 	hid = self = [super init];
@@ -273,13 +272,12 @@ static IOHIDManagerRef hidManager;
 	for(int i = 0; i < 256; ++i)
 		keys[i] = false;
 
-////
-	
-	[self setupPad];
-////
+	gpadmanager = [GPadManager new];
+	[gpadmanager start];
 
 	return self;
 }
+
 - (void)registerCallback:(IOHIDReportCallback)cb withContext:(void *)ctx andReport:(uint8_t *)rep withLength:(CFIndex) repLen {
 	callback = cb;
 	context = ctx;
@@ -294,6 +292,8 @@ static IOHIDManagerRef hidManager;
 
 	[self mapKeys];
 
+	// [gpadmanager start];
+	
 	uint8_t dpad = 8;
 	if(dpadLeft) {
 		if(dpadUp)
@@ -329,6 +329,7 @@ static IOHIDManagerRef hidManager;
 }
 
 - (void)kick {
+	
 	if(kicked)
 		return;
 	kicked = true;
@@ -354,6 +355,18 @@ static IOHIDManagerRef hidManager;
 #define DOWN(key) keys[key]
 - (void)mapKeys {
 #include "mapKeys.h"
+}
+
+- (void)fakeDown:(int)code {
+	NSLog(@"down %i", code);
+	hid->keys[code] = true;
+	[hid kick];
+}
+
+- (void)fakeUp:(int)code {
+	NSLog(@"down %i", code);
+	hid->keys[code] = false;
+	[hid kick];
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -418,3 +431,5 @@ void IOHIDDeviceRegisterInputReportCallback( IOHIDDeviceRef device, uint8_t *rep
 	printf("IOHIDDeviceRegisterInputReportCallback\n");
 	[hid registerCallback:callback withContext:context andReport:report withLength:reportLength];
 }
+
+

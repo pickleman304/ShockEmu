@@ -2,7 +2,7 @@
 [![macos-mojave](https://img.shields.io/badge/macos-mojave-brightgreen.svg)](https://www.apple.com/lae/macos/mojave)
 
 # Credits
-All credits should go to https://github.com/daeken
+All credits should go to https://github.com/daeken and https://github.com/suzukiplan/gamepad-osx.git
 
 # Setup
 ```zsh
