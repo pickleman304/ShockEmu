@@ -361,7 +361,7 @@ static GPadManager *gpadmanager;
 
 	[self mapKeys];
 	
-	NSLog(@"leftX %f", leftX);
+	// NSLog(@"leftX %f", leftX);
 
 	uint8_t dpad = 8;
 	if(dpadLeft) {
