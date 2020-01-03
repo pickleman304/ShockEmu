@@ -6,6 +6,8 @@
 
 # Credits
 All credits should go to https://github.com/daeken and https://github.com/suzukiplan/gamepad-osx.git
+If you are happy with my work you can pay me a beer:
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/micksoftware)
 
 # Setup
 ```zsh
