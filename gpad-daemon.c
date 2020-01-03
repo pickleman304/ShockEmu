@@ -8,7 +8,7 @@ int fd ;
 static void callback(int type, int page, int usage, int value)
 {
     char data[50];
-    printf("type=%d, page=%d, usage=%d, value=%d\n", type, page, usage, value);
+    // printf("type=%d, page=%d, usage=%d, value=%d\n", type, page, usage, value);
     sprintf(data, "%4d %4d", usage, value);
     write(fd, data, strlen(data)+1);
     fflush(stdout);

@@ -134,6 +134,7 @@ IOReturn IOHIDDeviceSetReport( IOHIDDeviceRef device, IOHIDReportType reportType
 	bool X, O, square, triangle, PS, touchpad, options, share, 
 	L1, L2, L3, R1, R2, R3, dpadUp, dpadDown, dpadLeft, dpadRight;
 	float leftX, leftY, rightX, rightY; // -1 to 1
+	uint8_t uleftX, uleftY, urightX, urightY;
 
 	bool keys[256], leftMouse, rightMouse;
 	bool kicked, decayKicked;
@@ -144,8 +145,9 @@ IOReturn IOHIDDeviceSetReport( IOHIDDeviceRef device, IOHIDReportType reportType
 	float mouseAccelX, mouseAccelY, mouseVelX, mouseVelY;
 }
 
--(void)fakeDown:(int)code;
--(void)fakeUp:(int)code;
+// -(void)fakeDown:(int)code;
+// -(void)fakeUp:(int)code;
+-(void)tickpad:(int)code :(int)val;
 @end
 
 
@@ -176,15 +178,15 @@ static int fd;
 }
 
 - (void) start {
-		char buf[10];
-		printf("GPAD Server: task launch\n");
+		// char buf[10];
+		// printf("GPAD Server: task launch\n");
 		
-		sprintf(buf,"%d",getpid());
 		// sprintf(buf,"%d",getpid());
-		if(mkfifo("/tmp/gpad-daemon-data",0660) == -1)
-				perror("mkfifo");
-		else 
-			printf("GPAD Server: pipe created : %s\n", buf);
+		// sprintf(buf,"%d",getpid());
+		// if(mkfifo("/tmp/gpad-daemon-data",0660) == -1)
+		// 		perror("mkfifo");
+		// else 
+		// 	printf("GPAD Server: pipe created : %s\n", buf);
 
 		[NSThread detachNewThreadSelector:@selector(gpadloop:) toTarget:[GPadManager class] withObject:self];
 }
@@ -198,23 +200,24 @@ static int fd;
 	
 	while (true) {
 
-		
-		read(fd, rdbuf, 50);
+		while (read(fd, rdbuf, 50)) {
+
 		if (strlen(rdbuf) > 0) {
-			printf("GPAD Server: has been entered : [%s] \n",rdbuf);
-			if (sscanf(rdbuf, "%4d%4d", &code, &val) == 1) {
-				printf("\t\t[%d][%d] \n",code, val);
+			// printf("GPAD Server: has been entered : [%s] \n",rdbuf);
+			int n = sscanf(rdbuf, "%d %d", &code, &val) ;
+			if (n >0) {
+				// printf("\t\t[%d][%d] \n",code, val);
+				[hid tickpad:code :val];
 			}
 			sprintf(rdbuf, "%s", "\0");
 			fflush(stdout);
-			// [hid fakeDown:124]
+		} 
 		}
 		
 		usleep(10000);
-		// [hid fakeUp:124];
 	} 
 
-	printf("GPAD Server: task loop KILLED!\n");
+	// printf("GPAD Server: task loop KILLED!\n");
 }
 @end
 
@@ -284,6 +287,72 @@ static GPadManager *gpadmanager;
 	report = rep;
 	reportLength = repLen;
 }
+
+////
+////
+////
+////
+////
+// 3/1/2020 Fetch by MiCkSoftware: Add gamepad wrapper
+- (void)tickpad: (int)code :(int)val {
+	uint8_t brep[] = {0x01, 0x7f, 0x81, 0x82, 0x7d, 0x08, 0x00, 0xb4, 0x00, 0x00, 0xc8, 0xad, 0xf9, 0x04, 0x00, 0xfe, 0xff, 0xfc, 0xff, 0xe5, 0xfe, 0xcb, 0x1f, 0x69, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1b, 0x00, 0x00, 0x01, 0x63, 0x8b, 0x80, 0xc1, 0x2e, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00};
+	PSReport *prep = (PSReport *) report;
+	uint8_t dpad = 8;
+	
+	memcpy(report, brep, sizeof(brep));
+
+	// printf("\t\t[%d][%d] \n",code, val);
+	
+
+	if (code ==57)
+		dpad = val;
+
+	if (code == 2) { X = (val == 1);}
+	else if (code == 3) { O = (val == 1);}
+	else if (code == 1) { square = (val == 1);}
+	else if (code == 4) { triangle = (val == 1);}
+	else if (code == 5) { L1 = (val == 1);}
+	else if (code == 6) { R1 = (val == 1);}
+	else if (code == 7) { L2 = (val == 1);}
+	else if (code == 8) { R2 = (val == 1);}
+	else if (code == 9) { share = (val == 1);}
+	else if (code == 10) { options = (val == 1);}
+	else if (code == 11) { L3 = (val == 1);}
+	else if (code == 12) { R3 = (val == 1);}
+	else if (code == 13) { PS = (val == 1);}
+	else if (code == 48) { 
+		uleftX = (uint8_t) fmin(fmax(val, 0), 255);
+	} else if (code == 49) { 
+		uleftY = (uint8_t) fmin(fmax(val, 0), 255);
+	} else if (code == 50) { 
+		urightX = (uint8_t) fmin(fmax(val, 0), 255);
+	} else if (code == 53) { 
+		urightY = (uint8_t) fmin(fmax(val, 0), 255);
+	} 
+
+	// NSLog(@"\t\t [%d] [%d]", code, val);
+
+	prep->buttons1 = (triangle ? (1 << 7) : 0) | (O ? (1 << 6) : 0) | (X ? (1 << 5) : 0) | (square ? (1 << 4) : 0) | dpad;
+	prep->buttons2 = (R3 ? (1 << 7) : 0) | (L3 ? (1 << 6) : 0) | (options ? (1 << 5) : 0) | (share ? (1 << 4) : 0) | 
+		(R2 ? (1 << 3) : 0) | (L2 ? (1 << 2) : 0) | (R1 ? (1 << 1) : 0) | (L1 ? (1 << 0) : 0);
+	prep->buttons3 = ((ticks << 2) & 0xFF) | (touchpad ? 2 : 0) | (PS ? 1 : 0);
+	prep->left_trigger = L2 ? 255 : 0;
+	prep->right_trigger = R2 ? 255 : 0;
+	prep->left_x = uleftX;
+	prep->left_y = uleftY;
+	prep->right_x = urightX;
+	prep->right_y = urightY;
+	callback(context, kIOReturnSuccess, (void *)0xDEADBEEF, kIOHIDReportTypeInput, 0x01, report, 64);
+
+	ticks++;
+
+}
+////
+////
+////
+////
+////
+
 - (void)tick {
 	uint8_t brep[] = {0x01, 0x7f, 0x81, 0x82, 0x7d, 0x08, 0x00, 0xb4, 0x00, 0x00, 0xc8, 0xad, 0xf9, 0x04, 0x00, 0xfe, 0xff, 0xfc, 0xff, 0xe5, 0xfe, 0xcb, 0x1f, 0x69, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1b, 0x00, 0x00, 0x01, 0x63, 0x8b, 0x80, 0xc1, 0x2e, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00};
 	PSReport *prep = (PSReport *) report;
@@ -291,9 +360,9 @@ static GPadManager *gpadmanager;
 	memcpy(report, brep, sizeof(brep));
 
 	[self mapKeys];
-
-	// [gpadmanager start];
 	
+	NSLog(@"leftX %f", leftX);
+
 	uint8_t dpad = 8;
 	if(dpadLeft) {
 		if(dpadUp)
@@ -357,17 +426,6 @@ static GPadManager *gpadmanager;
 #include "mapKeys.h"
 }
 
-- (void)fakeDown:(int)code {
-	NSLog(@"down %i", code);
-	hid->keys[code] = true;
-	[hid kick];
-}
-
-- (void)fakeUp:(int)code {
-	NSLog(@"down %i", code);
-	hid->keys[code] = false;
-	[hid kick];
-}
 
 - (void)keyDown:(NSEvent *)event {
 	NSLog(@"down %i", [event keyCode]);

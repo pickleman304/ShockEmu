@@ -1,4 +1,5 @@
 # Map movement controls to the left stick. The same can be done using 'right' instead of 'left'.
+
 w = leftY-
 a = leftX-
 s = leftY+

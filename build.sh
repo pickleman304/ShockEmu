@@ -1,7 +1,6 @@
 
 #!/bin/bash
 
-#make
-#python shockemu.py $1
+make
+python shockemu.py $1
 clang -dynamiclib -std=gnu99 iohid_wrap.m -current_version 1.0 -compatibility_version 1.0 -lobjc -framework Foundation -framework AppKit -framework CoreFoundation -o iohid_wrap.dylib
-#clang -std=gnu99 pad-listener.m -lobjc -framework Foundation -framework AppKit -framework CoreFoundation -o test2
